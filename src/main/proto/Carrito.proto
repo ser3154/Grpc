@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option java_package = "org.example";
+option java_multiple_files = true;
+
+service CarritoService{
+  rpc procesarCarrito (CarritoRequest) returns (CarritoResponse);
+}
+
+message Producto{
+  string id = 1;
+  string nombre = 2;
+  double precio = 3;
+  int32 cantidad = 4;
+}
+
+message CarritoRequest{
+  string usuario_id = 1;
+  repeated Producto items = 2;
+}
+
+message CarritoResponse{
+  string transaccion_id = 1;
+  double total_neto = 2;
+  double impuestos = 3;
+  double total_pagar = 4;
+  string estado = 5;
+}
