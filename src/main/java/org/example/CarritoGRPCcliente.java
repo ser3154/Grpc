@@ -1,5 +1,6 @@
 package org.example;
 
+import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
@@ -9,7 +10,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class CarritoGRPCcliente {
-
+    
+    private DefaultTableModel modeloCatalogo;
+    
     private JFrame ventana;
     private JTextField txtId, txtNombre, txtPrecio, txtCantidad;
     private DefaultTableModel modeloCarrito;
@@ -27,18 +30,20 @@ git
         stub = CarritoServiceGrpc.newBlockingStub(channel);
 
         construirGUI();
+        cargarCatalogo();
     }
 
     private void construirGUI(){
         ventana = new JFrame("Cliente - Carrito de compras gRPC");
         ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ventana.setSize(650, 520);
+        ventana.setSize(650, 1000);
         ventana.setLocationRelativeTo(null);
         ventana.setLayout(new BorderLayout(8, 8));
 
         ventana.add(crearPanelFormulario(), BorderLayout.NORTH);
         ventana.add(crearPanelCarrito(), BorderLayout.CENTER);
         ventana.add(crearPanelAcciones(), BorderLayout.SOUTH);
+        ventana.add(crearPanelCatalogo(), BorderLayout.NORTH);
 
         ventana.setVisible(true);
     }
@@ -202,8 +207,22 @@ git
         private void mostrarExito(CarritoResponse r){
         lblEstado.setText("Orden procesada | ID: " + r.getTransaccionId());
         lblEstado.setForeground(new Color(0x27AE60));
-        JOptionPane.showMessageDialog(ventana, String.format("Compra realizada con exito\n\n" + "ID Transaccion: %s\n" + "Subtotal:   $%.2f\n" + "IVA (16%):     $%.2f\n" + "TOTAL A PAGAR:     $%.2f", r.getTransaccionId(), r.getTotalNeto(), r.getImpuestos(), r.getTotalPagar(), "Compra exitosa", JOptionPane.INFORMATION_MESSAGE));
-
+        JOptionPane.showMessageDialog(
+                ventana,
+                String.format(
+                        "Compra realizada con exito\n\n" +
+                        "ID Transaccion: %s\n" +
+                        "Subtotal:   $%.2f\n" +
+                        "IVA (16%%):     $%.2f\n" +
+                        "TOTAL A PAGAR:     $%.2f",
+                        r.getTransaccionId(),
+                        r.getTotalNeto(),
+                        r.getImpuestos(),
+                        r.getTotalPagar()
+                ),
+                "Compra exitosa",
+                JOptionPane.INFORMATION_MESSAGE
+        );
         limpiarCarrito();
     }
 
@@ -212,6 +231,62 @@ git
         lblEstado.setForeground(new Color(0xC0392B));
 
         JOptionPane.showMessageDialog(ventana, mesaje, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    private void cargarCatalogo() {
+
+        CatalogoResponse response = stub.obtenerCatalogo(Empty.newBuilder().build());
+
+        for (Producto p : response.getProductosList()) {
+            modeloCatalogo.addRow(new Object[]{
+                    p.getId(),
+                    p.getNombre(),
+                    p.getPrecio()
+            });
+        }
+    }
+    
+    private JPanel crearPanelCatalogo(){
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createTitledBorder("Catalogo de productos"));
+
+        modeloCatalogo = new DefaultTableModel(
+                new String[]{"ID","Nombre","Precio"},0);
+
+        JTable tabla = new JTable(modeloCatalogo);
+
+        JButton btnAgregar = new JButton("Agregar al carrito");
+
+        btnAgregar.addActionListener(e -> {
+            int fila = tabla.getSelectedRow();
+
+            if(fila == -1){
+                mostrarError("Selecciona un producto");
+                return;
+            }
+
+            String id = modeloCatalogo.getValueAt(fila,0).toString();
+            String nombre = modeloCatalogo.getValueAt(fila,1).toString();
+            double precio = Double.parseDouble(modeloCatalogo.getValueAt(fila,2).toString());
+
+            String cantidadStr = JOptionPane.showInputDialog("Cantidad:");
+
+            int cantidad = Integer.parseInt(cantidadStr);
+
+            modeloCarrito.addRow(new Object[]{
+                    id,
+                    nombre,
+                    String.format("$%.2f",precio),
+                    cantidad,
+                    String.format("$%.2f",precio*cantidad)
+            });
+        });
+
+        panel.add(new JScrollPane(tabla),BorderLayout.CENTER);
+        panel.add(btnAgregar,BorderLayout.SOUTH);
+
+        return panel;
     }
 
 }
