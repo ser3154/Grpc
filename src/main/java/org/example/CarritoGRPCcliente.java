@@ -21,7 +21,7 @@ public class CarritoGRPCcliente {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new CarritoGRPCcliente().iniciar());
     }
-
+git
     public void iniciar(){
         channel = ManagedChannelBuilder.forAddress("localhost", 50051).usePlaintext().build();
         stub = CarritoServiceGrpc.newBlockingStub(channel);
