@@ -3,7 +3,11 @@ syntax = "proto3";
 option java_package = "org.example";
 option java_multiple_files = true;
 
+import "google/protobuf/empty.proto";
+
 service CarritoService{
+  
+  rpc obtenerCatalogo (google.protobuf.Empty) returns (CatalogoResponse);
   rpc procesarCarrito (CarritoRequest) returns (CarritoResponse);
 }
 
@@ -12,6 +16,10 @@ message Producto{
   string nombre = 2;
   double precio = 3;
   int32 cantidad = 4;
+}
+
+message CatalogoResponse{
+  repeated Producto productos = 1;
 }
 
 message CarritoRequest{
